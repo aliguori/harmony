@@ -41,7 +41,7 @@ impl std::fmt::Debug for HarmonyEncodingName {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "network"))]
 pub fn load_harmony_encoding(name: HarmonyEncodingName) -> anyhow::Result<HarmonyEncoding> {
     match name {
         HarmonyEncodingName::HarmonyGptOss => {
@@ -81,7 +81,7 @@ pub fn load_harmony_encoding(name: HarmonyEncodingName) -> anyhow::Result<Harmon
     }
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "network"))]
 pub async fn load_harmony_encoding(name: HarmonyEncodingName) -> anyhow::Result<HarmonyEncoding> {
     match name {
         HarmonyEncodingName::HarmonyGptOss => {

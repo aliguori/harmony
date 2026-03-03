@@ -96,7 +96,7 @@ impl Encoding {
         None
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(all(not(target_arch = "wasm32"), feature = "network"))]
     pub fn load_from_name(name: impl AsRef<str>) -> Result<CoreBPE, LoadError> {
         let name = name.as_ref();
         Self::from_name(name)
@@ -104,7 +104,7 @@ impl Encoding {
             .load()
     }
 
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_arch = "wasm32", feature = "network"))]
     pub async fn load_from_name(name: impl AsRef<str>) -> Result<CoreBPE, LoadError> {
         let name = name.as_ref();
         Self::from_name(name)
@@ -121,7 +121,7 @@ impl Encoding {
         }
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(all(not(target_arch = "wasm32"), feature = "network"))]
     pub fn load(&self) -> Result<CoreBPE, LoadError> {
         #[cfg(not(target_arch = "wasm32"))]
         let (vocab_file_path, check_hash) =
@@ -202,7 +202,7 @@ impl Encoding {
         }
     }
 
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_arch = "wasm32", feature = "network"))]
     pub async fn load(&self) -> Result<CoreBPE, LoadError> {
         let url = self.public_vocab_file_url();
         let vocab_bytes = download_or_find_cached_file_bytes(&url, Some(self.expected_hash()))
@@ -434,7 +434,7 @@ where
 
 /// This returns the path to a file containing the data at `url`. If the file is
 /// cached, it is used. Otherwise, the file is downloaded and cached.
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "network"))]
 fn download_or_find_cached_file(
     url: &str,
     expected_hash: Option<&str>,
@@ -461,7 +461,7 @@ fn download_or_find_cached_file(
     Ok(cache_path)
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "network"))]
 async fn download_or_find_cached_file_bytes(
     url: &str,
     expected_hash: Option<&str>,
@@ -526,7 +526,7 @@ fn verify_file_hash(
 
 /// Loads a remote file to `destination` and returns the computed hash of the
 /// file contents.
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "network"))]
 fn load_remote_file(url: &str, destination: &Path) -> Result<String, RemoteVocabFileError> {
     let client = reqwest::blocking::Client::new();
     let mut response = client
@@ -555,7 +555,7 @@ fn load_remote_file(url: &str, destination: &Path) -> Result<String, RemoteVocab
     Ok(format!("{:x}", hasher.finalize()))
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(any(target_arch = "wasm32", not(feature = "network")))]
 fn load_remote_file(_url: &str, _destination: &Path) -> Result<String, RemoteVocabFileError> {
     Err(RemoteVocabFileError::FailedToDownloadOrLoadVocabFile(
         Box::new(std::io::Error::new(
@@ -565,7 +565,7 @@ fn load_remote_file(_url: &str, _destination: &Path) -> Result<String, RemoteVoc
     ))
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "network"))]
 async fn load_remote_file_bytes(url: &str) -> Result<Vec<u8>, RemoteVocabFileError> {
     use reqwest::Client;
 
