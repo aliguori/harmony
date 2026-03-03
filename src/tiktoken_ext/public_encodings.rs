@@ -264,7 +264,7 @@ impl Encoding {
         }
     }
 
-    fn special_tokens(&self) -> &'static [(&'static str, Rank)] {
+    pub fn special_tokens(&self) -> &'static [(&'static str, Rank)] {
         match self {
             Self::O200kBase => &[],
             Self::O200kHarmony => &[
@@ -295,7 +295,7 @@ impl Encoding {
         }
     }
 
-    fn pattern(&self) -> String {
+    pub fn pattern(&self) -> String {
         match self {
             Self::O200kBase => {
                 [
@@ -403,6 +403,27 @@ where
 {
     let encoder = load_tiktoken_vocab_file(file_path, expected_hash)
         .map_err(LoadError::InvalidTiktokenVocabFile)?;
+    CoreBPE::new(
+        encoder,
+        special_tokens.into_iter().map(|(k, v)| (k.into(), v)),
+        pattern,
+    )
+    .map_err(LoadError::CoreBPECreationFailed)
+}
+
+pub fn load_encoding_from_bytes<S, TS>(
+    data: &[u8],
+    expected_hash: Option<&str>,
+    special_tokens: S,
+    pattern: &str,
+) -> Result<CoreBPE, LoadError>
+where
+    S: IntoIterator<Item = (TS, Rank)>,
+    TS: Into<String>,
+{
+    let reader = std::io::BufReader::new(data);
+    let encoder =
+        load_tiktoken_vocab(reader, expected_hash).map_err(LoadError::InvalidTiktokenVocabFile)?;
     CoreBPE::new(
         encoder,
         special_tokens.into_iter().map(|(k, v)| (k.into(), v)),
